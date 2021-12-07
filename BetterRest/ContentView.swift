@@ -12,10 +12,9 @@ import CoreML
 struct AwesomeStack<Content: View>: View {
     @ViewBuilder var content: ()-> Content
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        Section {
             content()
         }
-        .padding()
     }
 }
 
@@ -51,25 +50,19 @@ struct ContentView: View {
                 }
                 
                 AwesomeStack {
-                    Text("Daily coffee intake")
-                        .font(.headline)
-                    
-                    Stepper(coffeeAmount == 1 ? "1 cup" : "\(coffeeAmount) cups", value: $coffeeAmount, in: 1...20)
+                    Picker("Choose Coffee Amount", selection: $coffeeAmount) {
+                        ForEach(1..<21) { Text("\($0) \($0 == 1 ? "Cup" : "Cups")")}
+                    }
+                    .font(.headline)
                 }
+                
+                Text("\(calculateBedTime)")
             }
             .navigationTitle("Better Rest")
-            .toolbar {
-                Button("Calculate", action: calculateBedTime)
-            }
-            .alert(alertTitle, isPresented: $showingAlert) {
-                Button("OK") {}
-            } message: {
-                Text(alertMessage)
-            }
         }
     }
     
-    func calculateBedTime() {
+    private var calculateBedTime: String {
         do {
             let config = MLModelConfiguration()
             let model = try SleepCalculator(configuration:  config)
@@ -82,14 +75,11 @@ struct ContentView: View {
             
             let sleepTime = wakeUp - prediction.actualSleep
             
-            alertTitle = "Your ideal bedtime is…"
-            alertMessage = sleepTime.formatted(date: .omitted, time: .shortened)
+            return sleepTime.formatted(date: .omitted, time: .shortened)
             
         } catch {
-            alertTitle = "Error"
-            alertMessage = "Sorry, there was a problem calculating your bedtime."
+            return "An Error occured!"
         }
-        showingAlert = true
     }
 }
 
